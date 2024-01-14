@@ -1,0 +1,3397 @@
+﻿
+<style>
+
+	div{
+		background-color: #bbb;
+		padding: 0.2rem;
+	}
+
+body{
+
+margin:0;
+
+padding:0;
+
+}
+
+
+
+ *{
+
+	-webkit-touch-callout: none;
+
+        -webkit-user-select: none;
+
+        -khtml-user-select: none;
+
+        -moz-user-select: none;
+
+        -ms-user-select: none;
+
+        user-select: none;
+
+        outline: none;
+
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */}
+
+ canvas {
+
+        -webkit-touch-callout: none;
+
+        -webkit-user-select: none;
+
+        -khtml-user-select: none;
+
+        -moz-user-select: none;
+
+        -ms-user-select: none;
+
+        user-select: none;
+
+        outline: none;
+
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0); /* mobile webkit */
+
+	height:100%;
+
+	overflow:hidden;
+
+	width:100%;
+
+	position:fixed;
+
+	background-color:lightblue;		
+	} 
+
+</style>
+
+<link rel="manifest" href="./manifest.json" src="./manifest.json" >
+
+
+
+<canvas id="canvas" >
+</canvas>
+
+
+
+<script >
+
+
+const any=a=>true
+const arg=a=>a
+const none=_=>false
+const byType= type => a=>typeof(a)==type
+const self=function(){return this}
+const it=self
+mapType=(o,m)=>{
+
+
+
+    if(typeof(o)!='object'||typeof(m)!='object')throw 'Not an Object at mapType(?,?)'
+
+
+
+    let r = true
+
+
+
+    m.forAll(k=>
+				r= 
+					typeof(o[k]) != typeof(m[k])
+					?
+				false
+					:
+				r
+			)
+
+
+
+    return r
+
+}
+
+
+Object.prototype.__defineGetter__(
+	'p',
+	function(){return Object.getPrototypeOf(this)}
+)
+Object.prototype.__defineGetter__(
+	'pn',
+	function(){return Object.getOwnPropertyNames(this)}
+)
+Object.prototype.__defineGetter__(
+	'pd',
+	function(){return (name)=>{Object.getOwnPropertyDescriptor(this,name)}}
+)
+Object.prototype.__defineGetter__(
+	'pd',
+	function(){return (name)=>{Object.getOwnPropertyDescriptors(this,name)}}
+)
+Object.prototype.__defineGetter__(
+	'ps',
+	function(){return Object.getOwnPropertySymbols(this)}
+)
+
+Object.prototype.sp = function(p){return Object.setPrototypeOf(this,p)}
+
+
+Object.prototype.forAll = function(delegate){
+
+
+
+    let i = 0
+
+
+
+    for(let k of Object.getOwnPropertyNames(this))
+
+
+
+    {
+
+
+
+        delegate(k,i)
+
+
+
+        i++
+
+
+
+    }
+
+	return this
+
+
+}
+
+
+
+Object.prototype.getKeys = function(){
+
+
+
+	return Object.keys(this)
+
+
+
+}
+
+
+Object.prototype.forEach = function(delegate){
+
+
+    let i = 0
+
+	
+
+
+    for(let k of this.getKeys())
+
+
+
+        {
+
+
+        	delegate(k,i)
+
+
+
+        	i++
+
+
+
+    	}
+
+
+}
+
+Array.prototype.forEach = Object.prototype.forEach
+
+
+Object.prototype.iterate= function (delegate) {
+
+	this.forEach((k,i)=>delegate(this[k],k,i))
+	return this
+}
+
+Object.prototype.forEachProto=function(delegate){
+	this.forEach((k,i)=>delegate(k,i,this))
+	let prototype = Object.getPrototypeOf(this)
+	while(prototype!=null){
+
+		prototype.forEach((k,i)=>delegate(k,i,prototype))
+
+		prototype = Object.getPrototypeOf(prototype)
+
+	}
+	return this
+}
+
+Object.prototype.forAllProto=function(delegate)
+{
+	this.forAll((k,i)=>delegate(k,i,this))
+	let prototype = Object.getPrototypeOf(this)
+	while(prototype!=null){
+
+		prototype.forAll((k,i)=>delegate(k,i,prototype))
+
+		prototype = Object.getPrototypeOf(prototype)
+	}
+	return this
+}
+
+Object.prototype.iterateProto =function(delegate){
+
+return this.forEachProto((k,i,p)=>delegate(this[k],k,i,p))
+
+}
+
+Object.prototype.iterateAllProto =function(delegate){
+
+return this.forAllProto((k,i,p)=>delegate(this[k],k,i,p))
+
+}
+
+Object.prototype.select = function (delegate) {
+	let result = []
+	this.iterate((i,k,e)=>result.push(delegate(i,k,e)))
+
+	return result
+}
+
+Object.prototype._select = function (delegate) {
+	this.iterate((i,k,e)=>this[k]=delegate(i,k,e))
+
+	return this
+}
+
+Object.prototype.selectAll = function(delegate) {
+	let result = []
+	this.iterateAll((i,k,e)=>result.push(delegate(i,k,e)))
+
+	return result
+}
+
+Object.prototype._selectAll = function(delegate) {
+	this.iterateAll((i,k,e)=>this[k]=delegate(i,k,e))
+
+	return this
+}
+
+Object.prototype.selectProto = function(delegate,useKey=true) {
+	let result = useKey?{}:[]
+	this.iterateProto((i,k,e,p)=>useKey?result[k]=delegate(i,k,e,p):result.push(delegate(i,k,e,p)))
+
+	return result
+}
+
+Object.prototype.selectAllProto = function(delegate,useKey=true) {
+	let result = useKey?{}:[]
+	this.iterateAllProto((i,k,e,p)=>useKey?result[k]=delegate(i,k,e,p):result.push(delegate(i,k,e,p)))
+
+	return result
+}
+
+Object.prototype._selectProto = function(delegate) {
+	this.iterateProto((p,k,i,pt)=>pt[k]=delegate(p,k,i,pt))
+
+	return this
+}
+
+Object.prototype._selectAllProto = function(delegate) {
+	
+	this.iterateAllProto((p,k,i,pt)=>pt[k]=delegate(p,k,i,pt))
+
+	return this
+}
+
+Object.prototype.foreach = function(delegate) {
+	return this.select(delegate)
+}
+
+Object.prototype.for = function (delegate) {
+	return this.select(delegate)
+}
+
+Object.prototype.each = function (delegate) {
+	return this.select(delegate)
+}
+
+Object.prototype._ = function (delegate) {
+	return this.select(delegate)
+}
+
+Object.prototype.__ = function (delegate) {
+	return this._select(delegate)
+}
+
+Object.prototype.all = function (delegate) {
+	return this.selectAll(delegate)
+}
+
+Object.prototype._all = function (delegate) {
+	return this._selectAll(delegate)
+}
+
+Object.prototype._allp = function (delegate) {
+	return this._selectAllProto(delegate)
+}
+
+Object.prototype.__p = function (delegate) {
+	return this._selectProto(delegate)
+}
+Object.prototype.allp = function (delegate,useKey) {
+	return this.selectAllProto(delegate,useKey)
+}
+
+Object.prototype._p = function (delegate,useKey) {
+	return this.selectProto(delegate,useKey)
+}
+
+Object.prototype.filter= function(delegate,useKey=false){
+
+
+
+	let result=[]
+
+
+
+	this.iterate((o,k,i)=>{
+
+
+
+		if(delegate(o,k,i))
+			if(useKey)
+				result[k]=o
+			else
+				result.push(o)
+
+
+
+
+	})
+
+
+
+	return result
+
+
+
+}
+
+Object.prototype.filterProto = function(delegate,useKey=false){
+
+	let result=[]
+
+	this.iterateProto((o,k,i,p)=>{
+
+		if(delegate(o,k,i,p))
+			if(useKey)
+				result[k]=o
+			else
+				result.push(o)
+
+	})
+
+	return result
+
+}
+
+
+Object.prototype.slice=function(start,end){
+
+
+
+	let arr = [...this]
+
+
+
+	return arr.slice(start,end)
+
+
+
+}
+
+
+
+Object.prototype.find=function (delegate){
+
+
+
+	let result
+
+
+
+	this.iterate((o,i)=>{
+
+
+
+		if((delegate(o,i)??false)&&(result==undefined))
+
+
+
+			result = o
+
+
+
+		
+
+
+
+	})
+
+
+
+	return result
+
+
+
+}
+
+
+
+Object.prototype.any=function (delegate){
+
+
+
+	let result = false
+
+
+
+	this.iterate((o,i)=>{
+
+
+
+		if((delegate(o,i)??false))
+
+
+
+			result = true
+
+
+
+	})
+
+
+
+	return result
+
+
+
+}
+
+
+
+Object.prototype.remove=function (delegate){
+
+
+
+	let result = []
+
+
+
+	this.iterate((o,k,i)=>{
+
+
+
+		if((delegate(o,k,i)??false))
+
+		{
+
+			let r = {}
+
+			Object.assign(r,o)
+
+			result.push(r)
+
+			delete this[k] 
+
+		}
+
+		
+
+
+
+	})
+
+
+
+	return result
+
+
+
+}
+
+Object.prototype.iterateAll= function (delegate) {
+
+
+
+	this.forAll((k,i)=>delegate(this[k],k,i))
+
+
+
+}
+
+
+
+
+
+
+
+	Object.prototype._copy = function (...args) {
+
+
+
+		let o = {}
+
+
+		Object.assign(o, this, ...args)
+		Object.assign(...args,this)
+
+
+
+		return o
+
+
+
+	}
+	Object.prototype.maintainUndefined = function (...args) {
+
+		
+		const ARG = args[0]
+
+		let o = this._copy(...args)
+		if(ARG!=undefined)
+		this.iterate((p,k)=>{
+			
+			if (p == undefined && ARG[k] != undefined) {
+				console.log(k,ARG[k],this[k],o[k])
+				o[k] = ARG[k]
+				args[0]=ARG[k]
+
+					
+			}
+		})
+
+
+		return o
+
+
+
+	}
+
+	Object.prototype.copy = function (...args) {
+		let o = this._copy(...args)
+		this.copyAll(o, ...args)
+		this.copyAll(...args)
+		return o
+	}
+
+	Object.prototype.copyAll = function () {
+
+
+
+		let o = {}
+
+
+
+		if (typeof (arguments[0]) == 'object') {
+
+			arguments[0].iterateAll((p, k) => {
+
+				o[k] = p
+
+			})
+
+			this.iterateAll((p, k) => {
+
+
+
+				arguments[0][k] = p
+
+
+
+				o[k] = p
+
+
+
+			})
+
+		}
+
+		else {
+
+
+
+			this.iterateAll((p, k) => {
+
+
+
+				o[k] = p
+
+
+
+			})
+
+
+
+		}
+
+
+
+		return o
+
+
+
+	}
+
+
+
+sign = Math.sign
+signed = a=>a*sign(a)
+nsigned = a=>signed(a)*-1
+diff= (a,b)=> signed(signed(a)-signed(b))
+Number.prototype.__defineGetter__('signed',function(){return signed(this)})
+Number.prototype.__defineGetter__('nsigned',function(){return nsigned(this)})
+Number.prototype.__defineGetter__('sign',function(){return sign(this)})
+Number.prototype.diff = function(a){return diff(this,a)}
+
+
+document.onkeydown=function(e){
+	e.preventDefault()
+    Engine.keymap[e.keyCode]=true
+
+	Engine.keystate[e.keyCode] = true
+	window.conn.invoke('input',Engine.keystate)
+
+}
+
+
+
+document.onkeyup=function(e){
+
+		Engine.keystate[e.keyCode] = false
+		window.conn.invoke('input', Engine.keystate)
+	
+}
+
+  let touch = (e,type)=>{
+
+	let con = Engine.objects['console']
+
+	con.log(`touches: ${e.touches.length}`)
+
+	let event = (t,k,i)=>{
+
+		if(Engine.debug)con.logline(`${k}: ${type}  ${t.identifier}\nx: ${t.clientX} y: ${t.clientY}`)
+
+		if(type !='touchend'){
+
+			if(t.clientX>canvas.clientWidth/2)
+
+			{
+
+				touchstate[t.identifier]='Right'
+
+				touchmap['Right']=true
+
+			}
+
+			if(t.clientX<canvas.clientWidth/2)
+
+			{
+
+				touchstate[t.identifier]='Left'
+
+				touchmap['Left']=true
+
+			}
+
+		}
+
+		else
+
+		{
+
+			if(Engine.debug)con.logline(`changed${i} ${type}  ${t.identifier}\nx: ${t.clientX} y: ${t.clientY}`)
+
+			touchstate[t.identifier] = 'end'
+
+		}
+
+		
+
+	}
+
+
+
+	if(type !='touchend')
+
+		e.touches.iterate(event)
+
+	else 
+
+		e.changedTouches.iterate(event)
+
+}
+
+
+
+  canvas = document.querySelector('canvas')
+
+
+  canvas.height = window.innerHeight
+  canvas.width = window.innerWidth
+
+  window.addEventListener('resize',e=>{
+	console.log(canvas.height , canvas.width )
+	canvas.height = window.innerHeight
+  	canvas.width = window.innerWidth
+	  console.log(canvas.rect)
+  })
+
+	screen.orientation.addEventListener("change", function (e) {
+		console.log(canvas.height, canvas.width)
+		canvas.height = window.innerHeight
+		canvas.width = window.innerWidth
+		console.log(canvas.rect)
+	});
+  canvas.addEventListener('touchstart', e=>touch(e,'touchstart',));
+
+
+
+  canvas.addEventListener('touchend', e=>touch(e,'touchend'));
+
+
+
+  canvas.addEventListener('touchcancel', e=>touch(e,'touchcancel'));
+
+
+
+  canvas.addEventListener('touchmove', e=>touch(e,'touchmove'));
+
+
+window.onmousedown=function(e){
+		Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
+		Engine.mousedown[e.which] = e
+		Engine.mousebutton[e.which] = e
+		Engine.mouseclick[e.which] = e
+
+	console.log('mousedown',e)
+	mouse = e
+	Engine.mouse= e
+	conn.invoke('Mouse', Engine.mousestate)
+}
+
+window.onmouseup=function(e){
+		Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
+	mouse = e
+	Engine.mouse= e
+
+		conn.invoke('Mouse', Engine.mousestate)
+}
+	window.oncontextmenu=function(e){e.preventDefault()}
+window.onmousemove=function(e){
+	
+		mouse = e
+	Engine.mouse= e
+
+		conn.invoke('Mouse', [{ which:0, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }])
+}
+
+clearMouse=function(e){
+    Engine.mousestate.__(()=>undefined)
+
+	if(e.type.search('mouse')>=0)
+	{
+		mouse = e
+		Engine.mouse= e
+	}
+}
+
+window.onmouseout=
+	clearMouse
+
+window.onblur=
+	clearMouse
+
+MouseEvent.prototype.__defineGetter__('canvasX',
+function(){
+	let rect = canvas.rect
+	let x = this.x - rect.x
+	return x*(canvas.width/rect.width)
+})
+MouseEvent.prototype.__defineGetter__('canvasY',
+function(){
+	let rect = canvas.rect
+	let y = this.y - rect.y
+	return y*(canvas.width/rect.width)
+}) 
+MouseEvent.prototype.__defineGetter__('ctxX',function(){
+	return this.canvasX * (1/canvas.ctx.getTransform().a)
+})
+MouseEvent.prototype.__defineGetter__('ctxY',function(){
+	return this.canvasY * (1/canvas.ctx.getTransform().d)
+}) 
+MouseEvent.prototype.__defineGetter__('gameX',function(){
+	return this.ctxX - Engine.offset.x
+})
+MouseEvent.prototype.__defineGetter__('gameY',function(){
+	return this.ctxY - Engine.offset.y
+}) 
+Element.prototype.__defineGetter__('rect',Element.prototype.getBoundingClientRect)
+HTMLCanvasElement.prototype.__defineGetter__('ctx',function(){return this.getContext('2d')})
+
+class Engine {
+
+
+
+	constructor(){throw "Abstract Class Engine"}
+
+
+
+	static debug=false
+
+
+
+	static ce = document.querySelector('canvas')	
+	static canvas = Engine.ce
+	static get ctx(){ return Engine.ce.ctx }
+
+
+
+	static offset = {x:0,y:0}
+
+
+
+	static keymap={}
+
+
+
+	static keystate=[]
+
+
+	static touchmap=[]
+
+
+
+	static touchstate=[]
+
+	static mousestate=[]
+	static mousedown=[]
+	static mouseup=[]
+	static mousebutton=[]
+	static mouseclick=[]
+	static mouse = []
+
+	static frameCount = 0
+
+
+
+	static lastCount = Date.now()
+
+
+
+	static fps = 24
+
+
+
+	static get updateTime(){return 1000/Engine.fps}
+
+
+
+	static get idealUpdateTime(){return Engine.updateTime - (Engine.updateOffset)}
+
+
+
+	static get updateOffset(){return Engine._updateOffset>0?Engine._updateOffset:0}
+
+
+
+	static get _updateOffset(){return Engine.delta - Engine.idealDelta}
+
+
+
+	static get delta(){return Date.now()-Engine.lastCount}
+
+
+
+	static get idealDelta(){return (Engine.frameCount) * Engine.updateTime}
+
+
+
+	static get rect (){return Engine.canvas.rect }
+
+
+
+	static objects=[];
+
+
+
+
+	static stop = false;
+
+
+
+	static Update(){
+
+		Engine.last = new Date().getTime()
+
+		if(Engine.keymap['Escape'])
+
+			return Engine.keymap['Escape'] = !( Engine.stop = true)
+
+
+
+			Engine.ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+		Engine.touchmap.iterate((s,k,i)=>
+
+		{
+
+			Engine.touchmap[k] = Engine.touchstate.any(t=>t==k)
+
+		})
+		
+		Engine.objects.iterate((obj,key)=>{
+
+			if(obj instanceof GameObject)
+
+				try{obj._update(Engine.ctx,key)}catch(e){console.log(e)}
+
+			else if(obj instanceof Function)
+					try { obj(Engine.ctx, key) } catch (e) { console.log(e) }
+				
+			else
+				try{throw "Invalid GameObject"}catch(e){console.log(e)}
+
+		})
+
+
+
+		Object.assign(Engine.keymap,Engine.keystate)
+		Object.assign(Engine.mousebutton,Engine.mousestate)
+		Engine.mouseclick.__(none)
+		
+
+		if(!Engine.stop)
+		{
+
+
+
+			Engine.frameCount++
+
+
+			if(Engine.frameCount >= Engine.fps)
+			{
+
+
+
+				Engine.lastCount = Date.now()
+
+
+
+				Engine.frameCount = 0
+
+
+
+			}
+
+
+
+			setTimeout(
+
+
+
+				()=>{
+
+
+
+					Engine.Update()
+
+					
+
+				},
+
+
+
+				Engine.idealUpdateTime
+
+
+
+			)
+
+		}
+
+		else document.exitFullscreen()
+
+	}
+
+
+	static async Start(fps=24){
+
+
+
+		Engine.stop = false
+
+
+
+		
+
+
+
+		if(fps!=null)
+
+
+
+			Engine.fps=fps
+
+
+
+		
+
+
+
+		Engine.Update()
+
+
+
+	}	
+
+
+	static Stop(){
+
+
+
+	Engine.stop = true
+
+
+
+	}
+
+}
+
+
+class Drawable
+{
+
+	width=this.width??0
+	height=this.height??0
+	mirrored=this.mirrored??false
+	upsidedown=this.upsidedown??false
+
+	constructor(draw){
+
+
+		if(draw!=null)this.Draw = draw
+
+
+	}
+
+
+
+	Draw(ctx,x,y,key)
+	{
+
+	}
+	BeforeDraw(ctx,x,y,key)
+	{
+		
+	}
+	AfterDraw(ctx,x,y,key)
+	{
+
+	}
+
+
+
+	_draw(ctx,x,y,key)
+	{
+		if (Engine.offset==undefined)
+			console.log('offset==undefined')
+
+		this._beforeDraw(ctx,Engine.offset.x + x,Engine.offset.y + y,key)
+		try{
+			this.Draw(ctx,Engine.offset.x + x,Engine.offset.y + y,key)
+		}catch(ex){console.log(ex)}
+		this._afterDraw(ctx,Engine.offset.x + x,Engine.offset.y + y,key)
+	}
+	_beforeDraw(ctx,x,y,key)
+	{
+		this.TransformBefore(ctx,x,y,key)
+		try {
+			this.BeforeDraw(ctx,x,y,key)
+			} catch (ex) { console.log(ex) }
+	}
+	_afterDraw(ctx,x,y,key)
+	{
+		try {
+			this.AfterDraw(ctx, x, y, key)
+			} catch (ex) { console.log(ex) }
+		this.TransformAfter(ctx,x,y,key)
+	}
+
+	TransformBefore(ctx,x,y,key){
+		if(this.mirrored){
+				this.hasmirrored = this.width + (x * 2)
+				ctx.transform(-1, 0, 0, 1, this.hasmirrored, 0)
+		}
+	}
+	TransformAfter(ctx,x,y,key){
+		if(this.hasmirrored||this.mirrored){
+				ctx.transform(-1, 0, 0, 1, this.hasmirrored, 0)
+			this.hasmirrored = false
+		}
+		
+	}
+
+}
+
+
+class GameObject extends Drawable{
+
+	constructor(DrawableGameObject_Id){
+
+
+
+		super(arguments.find(a=>typeof(a)=='function'))
+
+
+
+
+
+
+
+		/*if(DrawableGameObject instanceof GameObject
+
+
+
+		|| DrawableGameObject instanceof Drawable )
+
+
+
+		*/
+
+
+
+		let o = arguments.find(a=>typeof(a)=='object')
+
+
+
+		if(o != undefined){
+
+
+
+			Object.assign(this,o)
+
+
+
+		}
+
+
+
+
+
+
+
+		let numberArr = arguments.filter(a=>typeof(a)=='number')
+
+
+
+		if(numberArr.length>=2)
+
+
+
+		{
+
+
+
+			this.x = numberArr[0]
+
+
+
+			this.y = numberArr[1]
+
+
+
+			numberArr = numberArr.slice(2)
+
+
+
+		}
+
+
+
+		this.id = [...arguments.filter(a=>typeof(a)=='string'),...numberArr].find(any)??this.id
+
+
+
+	}
+
+
+
+	x=0;
+
+
+
+	y=0;
+
+
+
+	id=Engine.objects.length;
+
+
+
+	Update(ctx){
+
+
+
+	
+
+
+
+	}
+
+
+
+
+
+
+
+	_update(ctx,key){
+
+
+
+	this.Update(ctx,key)
+
+
+
+	this._draw(ctx,this.x,this.y,key)
+
+
+
+	}
+
+
+
+}
+
+
+class Collision extends GameObject
+
+
+
+{
+
+
+
+	constructor(){super(...arguments)}
+
+
+
+	Collision(){}
+
+
+
+	_update(ctx,key){
+
+
+
+	this.Update(ctx,key)
+
+
+
+	this.Collision(ctx,key)
+
+
+
+	this._draw(ctx,this.x,this.y,key)
+
+
+
+	}
+
+
+
+}
+
+
+class Color{
+
+
+
+	constructor(value){
+
+
+
+		this.value=value??this.value
+
+
+
+	}
+
+
+
+	value='black'
+
+
+
+	valueOf=()=>this.value
+
+
+
+}
+
+
+
+
+
+
+class Vector
+{
+
+
+
+		constructor(VectorOrXY){
+
+
+
+				if(arguments.length>0)
+
+
+
+				{
+
+
+
+					let vector = arguments.find(a=>typeof(a)=="object")
+
+
+
+						if(typeof(vector)=="object" && typeof(vector.x)=="number" && typeof(vector.y)=="number")
+
+
+
+							
+
+
+
+							vector.copy(this)
+
+
+						else{
+
+
+
+							let numberArr=arguments.filter(a=>typeof(a)=="number")
+
+
+
+							if(numberArr.length!=2)
+
+
+
+								throw "Invalid paramaters at: new Vector(?)"
+
+
+
+							this.x=numberArr[0]
+
+
+
+							this.y=numberArr[1]
+
+
+
+						}
+
+
+
+				}
+
+
+
+		}
+
+
+
+		x=0
+
+
+
+		y=0
+
+
+
+}
+
+
+class Counter extends GameObject{
+
+
+
+	constructor(){
+
+
+
+		super(function(ctx,x,y,key){
+
+
+
+			let now = new Date().getTime()
+
+
+
+			let deltaT = now - this.last
+
+
+
+			if(deltaT >= 1000)
+
+
+
+			{
+
+
+
+				this.lastcount = this.counter		
+
+
+
+				this.counter=0	
+
+
+
+				this.last = now	
+
+
+
+			}
+
+
+
+			this.counter++
+
+
+			ctx.closePath();
+			ctx.beginPath();
+			
+			ctx.fillStyle='black'
+			
+			ctx.fillText(Math.floor(this.lastcount)+"/fps",5,parseInt(ctx.font.split('px')[0]))	
+
+
+
+		})
+
+
+
+
+
+
+
+		this.counter=0	
+
+
+
+		this.last= new Date().getTime()
+
+
+
+
+
+
+
+	}
+
+
+
+}
+
+
+
+
+
+
+
+Engine.objects['console'] =  new GameObject({
+
+    id:'console',
+
+    _log:[],
+
+    logging:true,
+
+    line:false,
+
+    log(v){
+
+	if(!this.line)
+
+		this._log=[]
+
+
+
+	if(typeof(v)=='string')
+
+		this._log=[...this._log,...v.split('\n')]
+
+	else
+
+	{
+
+		this._log.push(v)
+
+		v.iterateAll((p,k,i)=>{
+
+			this._log[i+1]=k+': '+p
+
+		})
+
+	}
+
+	
+
+	this.line=false
+
+    },
+
+    logline(v){
+
+    	this.line=true
+
+	this.log(v)
+
+    },
+
+    Update(ctx){
+
+	if(!this.logging)return;
+
+        this._log.iterate((l,i)=>{
+
+		ctx.fillText(l,5,20+10*(parseInt(i)))
+
+	}
+
+	)
+
+
+
+	this.line=false
+
+    }
+
+})
+
+
+
+
+
+Engine.objects['counter']= new Counter()
+
+
+class SquareBody extends Collision
+
+
+
+{
+
+
+
+	height = 0
+
+
+
+	width = 0
+
+
+
+	  constructor(){
+
+
+
+    	let numberArr = arguments.filter(a=>typeof(a)=="number")
+
+
+
+			
+
+
+
+			if(numberArr.length>=2)
+
+
+
+			{
+
+
+
+				super(...(arguments.slice(2)))
+
+
+
+				this.width = numberArr[0]
+
+
+
+				this.height	= numberArr[1]
+
+
+
+			}
+
+
+
+			else super(...arguments)
+
+
+
+
+
+
+
+  	}
+
+
+    Collision(){
+
+
+
+    	let squares = Engine.objects.filter(o=>o instanceof SquareBody && o.id != this.id,true)
+
+
+
+
+
+
+
+	let SquareCollision=(a,b)=>
+
+
+
+	{
+
+
+
+		let xc = 
+
+
+
+    			(
+
+
+
+    			a.x >= b.x 
+
+
+
+    				&&
+
+
+
+    			a.x <= b.x+b.width
+
+
+
+    			)
+
+
+
+    			||
+
+
+
+    			(
+
+
+
+    			a.x+a.width >= b.x 
+
+
+
+    				&&
+
+
+
+    			a.x+a.width <= b.x+b.width
+
+
+
+    			)
+
+
+
+		let yc =
+
+
+
+    			(
+
+
+
+    			a.y >= b.y 
+
+
+
+    				&&
+
+
+
+    			a.y <= b.y+b.height
+
+
+
+    			)
+
+
+
+    			||
+
+
+
+    			(
+
+
+
+    			a.y+a.height >= b.y 
+
+
+
+    				&&
+
+
+
+    			a.y+a.height <= b.y + b.height
+
+
+
+    			)
+
+
+
+    		
+
+
+
+		return xc && yc
+
+
+
+	}
+
+
+
+    	squares = squares.filter(o=>
+
+
+
+    			{
+
+
+
+    				return SquareCollision(this,o)||SquareCollision(o,this)
+
+
+
+    			}
+
+
+			,true
+    		)
+
+
+    	if(squares.length >0)
+
+
+
+    		this.OnCollision(...squares)
+
+
+
+    }
+
+
+
+    get center(){
+
+
+
+    	return new Vector(
+
+
+
+    		this.x+(this.width/2),
+
+
+
+    		this.y+(this.height/2)
+
+
+
+    		)
+
+
+
+    }
+
+
+
+    OnCollision(){
+
+
+
+    	
+
+
+
+    }
+
+
+
+}
+
+
+class Square extends SquareBody{
+
+
+	constructor(){
+
+
+
+		let index=Infinity
+
+
+
+		let c = arguments.find((a,i)=>a instanceof Color)
+
+
+
+
+
+
+
+		let a = [...arguments]		
+
+
+
+		if(c instanceof Color){
+
+
+
+			a.splice(index,1)
+
+
+
+		}
+
+
+
+		super(...a)
+
+
+
+		
+
+
+
+		this.color=c?.value??new Color().value
+
+
+
+
+
+
+
+	}
+
+
+
+
+
+
+
+	Draw(ctx,x,y){
+
+		ctx.fillStyle=this.color
+
+		ctx.fillRect(x,y,this.width,this.height)
+
+		if(this.collinding){
+
+
+
+			this.color=this.oldcolor
+
+
+
+			this.collinding=false
+
+
+
+		}
+
+
+
+	}
+
+	OnCollision(){
+
+
+
+		this.oldcolor=this.color
+
+
+
+		this.color=this.color=='red'?'blue':'red'
+
+
+
+		this.collinding=true
+
+
+
+	}
+
+
+
+}
+
+
+toNote=(n)=>{
+
+
+
+	switch(n)
+
+
+
+	{
+
+
+
+		case 'A':
+
+
+
+			return 440
+
+
+
+			break;
+
+
+
+		case 'A#':
+
+
+
+		case 'Bb':
+
+
+
+			return 466.16
+
+
+
+			break;
+
+
+
+		case 'B':
+
+
+
+			return 493.88
+
+
+
+			break;
+
+
+
+		case 'C':
+
+
+
+			return 523.25
+
+
+
+			break;
+
+
+
+		case 'C#':
+
+
+
+		case 'Db':
+
+
+
+			return 554.37
+
+
+
+			break;
+
+
+
+		case 'D':
+
+
+
+			return 587.33
+
+
+
+			break;
+
+
+
+		case 'D#':
+
+
+
+		case 'Eb':
+
+
+
+			return 622.25
+
+
+
+			break;
+
+
+
+		case 'E':
+
+
+
+			return 659.25
+
+
+
+			break;
+
+
+
+		case 'F':
+
+
+
+			return 698.46
+
+
+
+			break;
+
+
+
+		case 'F#':
+
+
+
+		case 'Gb':
+
+
+
+			return 739.99
+
+
+
+			break;
+
+
+
+		case 'G':
+
+
+
+			return 783.99
+
+
+
+			break;
+
+
+
+		case 'G#':
+
+
+
+		case 'Ab':
+
+
+
+			return 830.61
+
+
+
+			break;
+
+
+
+		case 'A2':
+
+
+
+			return 880.00
+
+
+
+			break;
+
+
+
+		case '':
+
+
+
+			return 0
+
+
+
+			break;
+
+
+
+		default:
+
+
+
+			throw 'Invalid Note'
+
+
+
+
+
+
+
+	}
+
+}
+
+
+
+function note(n){
+
+
+
+let context = new AudioContext();
+
+
+
+let oscillator = context.createOscillator();
+
+
+
+oscillator.type = "sine";
+
+
+
+oscillator.frequency.value = toNote(n);
+
+
+
+oscillator.connect(context.destination);
+
+
+
+oscillator.start(); 
+
+
+
+// Beep for 500 milliseconds
+
+
+
+setTimeout(function () {
+
+
+
+    oscillator.stop();
+
+
+
+    setTimeout(()=>{context.close()},100)
+
+
+
+}, 200);                
+
+
+
+}
+
+function notePitch(n,step){
+
+
+
+let context = new AudioContext();
+
+
+
+let oscillator = context.createOscillator();
+
+
+
+oscillator.type = "sawtooth";
+
+
+
+oscillator.frequency.value = toNote(n);
+
+
+
+let gain = context.createGain()
+
+
+
+oscillator.connect(gain)
+
+
+
+gain.connect(context.destination)
+
+
+
+gain.gain.value = 0.4
+
+
+
+let inter = setInterval((o)=>{
+
+
+
+
+
+
+
+	oscillator.frequency.value += step
+
+
+
+},1)
+
+
+
+
+
+
+
+oscillator.onended=()=>{
+
+
+
+clearInterval(inter)
+
+
+
+}
+
+
+
+
+
+
+
+oscillator.start(); 
+
+
+
+
+
+
+
+setTimeout(function () {
+
+
+
+    oscillator.stop();
+
+
+
+    setTimeout(()=>{context.close()},150)
+
+
+
+}, 350);                
+
+}
+
+music=(l=500,s=Date.now(),w=0)=>{
+
+
+
+    let m = (n,t=0)=>{
+
+
+
+	if(typeof(n)!='string')
+
+
+
+            return undefined
+
+
+
+
+
+
+
+	
+
+
+
+	setTimeout(
+
+
+
+		()=>note(n),
+
+
+
+		w
+
+
+
+		)
+
+
+
+
+
+
+
+	w+= l*t
+
+
+
+        
+
+
+
+	return m
+
+
+
+        
+
+
+
+    }
+
+
+
+        return m
+
+
+
+}
+
+SHEETMUSIC=(a=false)=>{
+
+music(600)
+
+	('A',0.5)('C',.5)('E',.5)('G',.5)('A2',.5)('E',.5)(a?'A2':'A')('A',1)
+
+}
+
+
+debug = false
+
+firstTime=true
+	
+window.directory = undefined
+window.files = {}
+
+async function readFiles(){
+	let option = arguments.find(o=>typeof(o) == 'object')
+	let names = arguments.filter(s=>typeof(s) == 'string')
+		let handle = async (n, o, d)=>{ return window.files[n] ?? d.getFileHandle(n, o).then(f => f.getFile()).then(f => { window.files[n] = f; return f }) }
+
+
+
+	if(this.directory)
+		return await Promise.all(names.select(n=>handle(n,option,this.directory)))
+
+	else
+		return await getDirectory().then(
+		async d => {
+			this.directory = d
+			return await Promise.all(names.select(n=>handle(n,option,d)))
+		}
+		)
+	 
+} 
+async function readFile(){
+	let option = arguments.find(o=>typeof(o) == 'object')
+	let error = arguments.find(f=>typeof(f) == 'function')
+	let name = arguments.find(s=>typeof(s) == 'string')
+		let handle = async (n, o, d) => { return window.files[n]?? d.getFileHandle(n, o).then(f => f.getFile()).then(f => { window.files[n] = f; return f; }) }
+
+
+	if(this.directory)
+		return handle(name,option,this.directory)
+
+	else
+		return getDirectory(error).then(
+		async d => {
+			this.directory = d
+			return handle(name,option,d)
+		}
+		)
+	 
+} 
+async function readJSON(name){
+	let state = true
+	await fetch('').catch(_=>state = false)
+	if(state)
+		return fetch(name).then(f=>f.json())
+	else
+		return readFile(name).then(f=>{if(f.type.toLowerCase().search('json')>=0)return f.text();})
+		.then(text=>JSON.parse(text))
+}
+async function writeFile(){
+	let option = arguments.find(o=>typeof(o) == 'object')
+	let error = arguments.find(f=>typeof(f) == 'function')
+	let name = arguments.find(s=>typeof(s) == 'string')
+	let handle = async (n,o,d)=>{return await d.getFileHandle(n,{create:true,...o}).then(f=>f.createWritable())}
+
+
+
+	if(this.directory)
+		return await handle(name,option,this.directory)
+
+	else
+		return await getDirectory(error).then(
+		async d => {
+			this.directory = d
+			return await handle(name,option,d)
+		}
+		)
+	
+}
+	
+
+	/*
+	
+	
+	.then(fh=>fh.getFile())
+	.then(f=>this.files.push(f))
+
+	this.f=files.find(f=>f.type.search('image')>=0)
+	f = this.f
+	if(f)
+	{
+		createImageBitmap(f).then(e=>{window.amg = e;getAnimParam(e)})
+	}
+
+	
+	*/
+
+async function getDirectory()
+{
+
+		return navigator.storage.getDirectory().catch(_ => showDirectoryPicker({ startIn: 'desktop', mode: 'readwrite' }))
+
+}
+
+Engine.copyAll(this)
+
+Start(60)
+class Anim extends GameObject{
+		offx=this.offx??0
+		offy=this.offy??0
+		w=this.w??0
+		h=this.h??0
+		ml=this.ml??0
+		mt=this.mt??0
+		fps=this.fps??0
+		count=this.count??0
+		row=this.row??0
+		filename=this.filename??''
+		type = this.type ?? 'default'
+		step = this.step ?? 1
+		stop = this.stop ?? false
+		img=undefined
+		sequences=this.sequences??[]
+		sequence = this.sequence ?? -1
+		beginAnim = this.beginAnim ?? false
+		beginned = this.beginned ?? false
+		last=Date.now()
+		frame=0
+		constructor(...args){
+			let numbers = args.filter(a=>typeof(a) == 'number')
+			let strings = args.filter(a=>typeof(a) == 'string')
+			let bools = args.filter(a=>typeof(a) == 'boolean')
+			let img = args.find(o=>o instanceof ImageBitmap)
+			let w,h,offx,offy,fps,count,filename,debug
+			try{
+				w=numbers[0]
+				h=numbers[1]
+				offx=numbers[2]
+				offy=numbers[3]
+				fps=numbers[4]
+				count=numbers[5]
+			}catch{}
+			try{
+				filename=strings[0]
+			}catch{}
+			try{
+				debug=bools[0]
+			}catch{}
+
+			numbers=numbers.slice(6)
+			strings=strings.slice(1)
+			bools=bools.slice(1)
+
+			super(...numbers,...strings,...bools,...arguments.filter(a=>(typeof(a) != 'number')&&(typeof(a) != 'boolean')&&(typeof(a) != 'string')&&!(a instanceof ImageBitmap)))
+
+			this.filename = filename??this.filename??''
+			this.debug = debug??this.debug??false
+			this.offx = offx??this.offx??0
+			this.offy = offy??this.offy??0
+			this.w = w??this.w??0
+			this.h = h??this.h??0
+			this.fps = fps??this.fps??0
+			this.img = img??this.img
+			this.count = count??this.count??0
+			
+		}
+
+		get Frames(){
+			if (!(this.img instanceof ImageBitmap))
+				return [];
+
+			let rows=(this.img.height-this.mt)/(this.h+this.offy)
+			let collumns=(this.img.width-this.ml)/(this.w+this.offx)
+			let frames = []
+			let counter = 0
+			for(let e = 1;e<= rows;e++)
+				if(this.row<=0||this.row == e)
+				{
+					for(let i = 1;i<= collumns;i++)
+					{
+						counter++
+						if(counter>this.count&&this.count)
+							break;
+						frames.push(
+						{
+							x:this.ml+(this.offx*i)+((i-1)*this.w),
+							y:this.mt+(this.offy*e)+((e-1)*this.h),
+							w:this.w,
+							h:this.h
+						}
+						)
+					}
+				}
+
+			return frames
+		}
+
+		get debug (){return this._debug}
+		set debug (boolean=false){if(boolean)this.Debug();this._debug=boolean}
+		
+		Draw(ctx,x,y){
+			if(!(this.img instanceof ImageBitmap))
+			{
+				this.LoadImageFile()
+				return;
+			}
+
+			ctx.closePath();
+			ctx.beginPath();
+			
+			if(this.debug){
+				
+				let old = ctx.globalCompositeOperation
+
+				ctx.fillStyle='blue'
+				ctx.fillRect(x,y+this.h,this.img.width,this.img.height)
+
+				ctx.globalCompositeOperation = 'destination-in'
+
+				
+				ctx.drawImage(this.img,x,y+this.h)
+
+				ctx.globalCompositeOperation = old
+			}
+
+
+			if((this.sequence>=0||(this.beginAnim!=undefined&&this.beginAnim.sequence>=0))&&this.sequences.length){
+				
+
+				if((!this.beginAnim)&&this.beginned)
+					this.beginned=false
+
+
+				if (this.beginAnim)
+					this.sequence = this.beginAnim.sequence
+				
+
+					const sequence = this.sequences[this.sequence]
+
+				let type
+
+				if(this.beginAnim){
+					this.type = this.beginAnim.type
+				}
+
+				if (this.type == undefined || this.type == '' || this.type == '_' || this.type.toLowerCase() == 'default')
+					type = sequence.type!=undefined?sequence.type:'replay'
+				else
+					type = this.type
+
+				
+					console.log
+				let play = _ => {
+					if (this.stop) return;
+
+					if (this.frame < sequence.length)
+						this.frame++
+
+					if (this.frame >= sequence.length)
+					{
+						this.frame = sequence.length -1
+					}
+
+					if (this.beginAnim && !this.beginned) {
+						console.log('beginned')
+						this.beginned=true
+						this.frame = 0
+					}
+				}
+				let replay = _ => {
+					if (this.stop) return;
+					
+					this.frame++
+
+					if (this.frame >= sequence.length)
+						this.frame = 0
+					if (this.beginAnim&&!this.beginned)
+					{
+						this.beginned = true
+						this.frame = 0
+					}
+				}
+				let play_reverse = _ => {
+					if (this.stop) return;
+
+					if (this.frame > 0)
+						this.frame--
+
+					if(this.frame <= -1)
+						this.frame = 0
+
+					if (this.beginAnim && !this.beginned) {
+						this.beginned = true
+						this.frame = sequence.length-1
+					}
+				}
+				let replay_reverse = _ => {
+					if (this.stop) return;
+					this.frame--
+					if (this.frame <= -1)
+						this.frame = sequence.length - 1
+					if (this.beginAnim && !this.beginned) {
+						this.beginned = true
+						this.frame = sequence.length - 1
+					}
+				}
+				let play_alternate = _ => {
+					if(this.stop)return;
+					this.frame+=this.step
+					if (this.frame <= -1)
+					{
+						this.frame = 0
+						this.step = 1
+						this.stop = true
+					}
+					if (this.frame >= sequence.length)
+					{
+						this.frame = sequence.length-1
+						this.step = -1
+						this.stop = true
+					}
+					if (this.beginAnim && !this.beginned) {
+						this.beginned = true
+						this.frame = 0
+					}
+				}
+				let replay_alternate = _ => {
+					if (this.stop) return;
+					this.frame += this.step
+					if (this.frame <= -1) {
+						this.frame = 0
+						this.step = 1
+					}
+					if (this.frame >= sequence.length) {
+						this.frame = sequence.length - 1
+						this.step = -1
+					}
+
+					if (this.beginAnim && !this.beginned) {
+						this.beginned = true
+						this.frame = 0
+					}
+				}
+				let animate = t => 
+				{
+					switch (t.toLowerCase()){
+						case 'play':
+							play();
+							break;
+						case 'replay':
+							replay()
+							break;
+						case 'play reverse':
+							play_reverse()
+							break;
+						case 'replay reverse':
+							replay_reverse()
+							break;
+						case 'play alternate':
+							play_alternate()
+							break;
+						case 'replay alternate':
+							replay_alternate()
+							break;
+					}
+				}
+
+				if( sequence?.fps&& Engine.fps>sequence.fps){
+					let now = Date.now()
+					if((now-this.last)>1000/sequence?.fps)
+					{
+						this.last = now
+						animate(type)
+					}
+				}
+				else{
+					animate(type)
+				}
+				let rx = x
+				let ry = y
+				if(sequence.offset)
+				{	
+					rx += sequence.offset.x
+					ry += sequence.offset.y
+				}
+
+				let oldframe = this.frame
+				
+
+				if (this.frame >= sequence.length)
+					this.frame = sequence.length - 1
+				if (this.frame <= -1)
+					this.frame = 0
+				
+				if(this.sequence ==8)
+					console.log(oldframe,this.frame)
+
+				this.DrawFrame(sequence[this.frame],ctx,rx,ry)
+			
+			}else {
+				if (this.frame < this.Frames.length)
+					this.frame++
+				if(this.frame>=this.Frames.length)
+					this.frame = 0
+				try{
+				this.DrawFrame(this.Frames[this.frame],ctx,x,y)
+				}catch{}
+			}
+			if(this.debug){
+				ctx.lineWidth=0.2
+				this.Frames.iterate(f=>{
+					ctx.strokeRect(x+f.x,y+this.h+f.y,f.w,f.h)
+					this.DrawFrame(f,ctx,x+f.x,y+this.h+f.y)
+				})
+
+				this.sequences.iterate(s=>s.filter(o=>isFinite(o.x)).iterate(f=>{
+					ctx.strokeRect(x+f.x,y+this.h+f.y,f.w,f.h)
+					this.DrawFrame(f,ctx,x+f.x,y+this.h+f.y)
+				}))
+			}
+
+			ctx.closePath();
+
+		}
+
+		DrawFrame(frame,ctx,x,y){
+
+			let sx = frame.x
+			let sy = frame.y
+			let sw = frame.w
+			let sh = frame.h
+
+			ctx.drawImage(this.img,sx,sy,sw,sh,x,y+(this.height-sh),sw,sh)
+		}
+		SaveSequence(){
+			let sequence = {...this.Frames}
+			sequence.fps = this.fps
+			sequence.w = this.w
+			sequence.h = this.h
+			sequence.length=this.Frames.length
+			this.sequences.push(sequence)
+		}
+		WriteToArchive(){
+			showSaveFilePicker({startIn:'desktop',
+    			types: [
+				{
+					description: "Save Animation JSON File",
+					accept: { "application/json": [".json"] },
+				},
+				]
+			}).then(async file=>{
+				let write = await file.createWritable()
+				console.log(write)
+				this.debug = false
+				delete this.draggable
+				this.loading = false
+				delete this.Update
+				await write.write(JSON.stringify(this))
+				await write.close()
+			})
+
+			
+		}
+		async LoadImageFile(){
+			
+			if(this.loading)return ;
+			this.loading = true
+			console.log('LoadImageFile', this.loading)
+
+			let state = true
+			await fetch('').catch(_=>state = false)
+
+			if(state)
+				return fetch(this.filename).then(_ => _.blob())
+					.then(i => createImageBitmap(i))
+					.then(img => this.img = img)
+					.catch(_ => { this.loading = false; throw _ })
+			else
+				return readFile(this.filename)
+					.then(i=>createImageBitmap(i))
+					.then(img=>this.img=img)
+					.catch(_=>{this.loading=false;throw _})
+			
+			
+		}
+		static async LoadAnim(jsonfilename='')
+		{
+			let names = arguments.filter(a=>typeof(a)== 'string')
+
+			if(!jsonfilename.length)
+				return showOpenFilePicker({startIn:'desktop',multiple:true,
+					types: [
+					{
+						description: "Animations",
+						accept: {
+							"application/json":[".json"]
+						},
+					}]	
+				})
+				.then(fh=>Promise.all(fh.select(h=>h.getFile().then(f=>{window.files['teste']=f;return f.text()})),fh))
+				.then(t=>[...t.filter(a=>typeof(a)=='string')
+										.select(j=>new Anim(JSON.parse(j)))])
+			else
+			if(names.length==1)
+				return readJSON(jsonfilename).then(o=>new Anim(o))
+			else
+				return Promises.all(names.for(n=>readJSON(n).then(o=>new Anim(o))))
+		}
+		Debug(){
+			window.ix.value =  this.x
+			window.iy.value =  this.y
+			window.iw.value =  this.w
+			window.ih.value =  this.h
+			window.iox.value = this.offx
+			window.ioy.value = this.offy
+			window.iml.value = this.ml
+			window.imt.value = this.mt
+			window.icount.value = this.count
+			window.irow.value = this.row
+			window.isequence.value = this.sequence
+		}
+		Update(){
+			if(!this.debug)return;
+			if(!this.firstTimeDebugging)
+
+			if(window.ix)
+			{
+				let i = parseInt(window.ix.value)
+				this.x = i
+				window.ix.value = isFinite(i)?i:0
+			}	
+			
+			if(window.iy)
+			{
+				let i = parseInt(window.iy.value)
+				this.y = i
+				window.iy.value = isFinite(i)?i:0
+			}
+			
+			if(window.iw)
+			{
+				let i = parseInt(window.iw.value)
+				this.w = i
+				window.iw.value = isFinite(i)?i:0
+			}
+
+			if(window.ih)
+			{
+				let i = parseInt(window.ih.value)
+				this.h = i
+				window.ih.value = isFinite(i)?i:0
+			}
+
+			if(window.iox)
+			{
+				let i = parseInt(window.iox.value)
+				this.offx = i
+				window.iox.value = isFinite(i)?i:0
+			}
+
+			if(window.ioy)
+			{
+				let i = parseInt(window.ioy.value)
+				this.offy = i
+				window.ioy.value = isFinite(i)?i:0
+			}
+
+			if(window.iml)
+			{
+				let i = parseInt(window.iml.value)
+				this.ml = i
+				window.iml.value = isFinite(i)?i:0
+			}
+
+			if(window.imt)
+			{
+				let i = parseInt(window.imt.value)
+				this.mt = i
+				window.imt.value = isFinite(i)?i:0
+			}
+
+			if(window.icount)
+			{
+				let i = parseInt(window.icount.value)
+				this.count = i
+				window.icount.value = isFinite(i)?i:0
+			}
+
+			if(window.irow)
+			{
+				let i = parseInt(window.irow.value)
+				this.row = i
+				window.irow.value = isFinite(i)?i:0
+			}
+
+			if(window.isequence)
+			{
+				let i = parseInt(window.isequence.value)
+				this.sequence = i
+				window.isequence.value = isFinite(i)?i:0
+			}
+			/*
+			if(window.i)
+			{
+				let i = parseInt(window.i.value)
+				this. = i
+				window.i.value = isFinite(i)?i:0
+			}
+			*/
+		}
+
+	}
+
+
+
+
+	listener=e=>{return;
+		if(firstTime&&!(files.length||objects.find(o=>o instanceof Anim)))
+		{
+			
+			Anim.LoadAnim('stormtrooper.json')
+			.then(o=>{
+				objects.push(o)
+				o.draggable = 
+					new Draggable({width:o.width,height:o.height})
+				o.draggable.Hook(o)
+				
+				o.Update= function(){
+						
+
+					if(!this.draggable.dragged)
+					{
+						this.draggable.x=this.x
+						this.draggable.y=this.y
+					}
+
+				}
+				objects.push(o.draggable)
+			})
+			.catch(e=>{
+				if(e.message.toLowerCase().search('user gesture')>=0)
+					firstTime=true;
+			})
+			
+			firstTime=false
+				
+		}
+		if(window.debug)console.log(e)
+
+	}
+
+	/*
+	window.filter((a,n)=>n.search('on')==0,true).iterate((o,k)=>window.addEventListener(k.split('on')[1],e=>listener(e)))
+	window.filterProto((a,n)=>n.search('on')==0,true).iterate((o,k)=>window.addEventListener(k.split('on')[1],e=>listener(e)))
+	window.onmouseover=e=>{window.focus();e.target.focus()}
+	window.addEventListener('focus',e=>{console.log(e.target); if(e.target instanceof HTMLInputElement)window.test = e.target})
+	*/
+	
+
+	function eSaveSequence(sender,e){
+
+		
+		let o=objects.find(o=>o instanceof Anim && o.debug)
+		if(o){
+			o.SaveSequence()
+		}
+	}
+
+	window.onwheel=e=>{
+			if((e.target.tagName != 'INPUT')||e.target==window.iy)
+			window.iy.value=parseInt(window.iy.value)-(e.deltaY/10)
+	}
+
+	
+	function WriteAnim(){
+		let o = objects.find(o=>o instanceof Anim && o.debug)
+		if(o){
+			o.WriteToArchive()
+		}
+	}
+
+	class Clickable extends GameObject {
+		Clicked=function(_){
+				try{
+					let mx = mousedown[1].gameX, my = mousedown[1].gameY
+					if(mx >= this.x && mx <=(this.x+this.width) && my >= this.y && my <=(this.y+this.height))
+						return {x:mx - this.x,y:my-this.y,timeStamp:mousedown[1].timeStamp}
+				}catch{return false}
+				return false
+			}
+	}
+	class Draggable extends Clickable {
+		dragged=false
+		toggle=true
+		toggled=false
+		constructor(){super(...arguments)}
+		
+		Update(){
+		this.Drag()
+		}
+
+		hooks=this.hooks??[]
+		Hook(...args){this.hooks.push(...args)}
+		_hook(...args){
+			let f = args.filter(byType('function'))
+			let o = args.filter(byType('object'))
+			f._(_=>_(this.x,this.y))
+			o._(_=>{
+				_.x = this.x
+				_.y = this.y
+			})
+		}
+		Drag(){
+			let clicked=_=>{
+				try{
+					let mx = mousedown[1].gameX, my = mousedown[1].gameY
+					if(mx >= this.x && mx <=(this.x+this.width) && my >= this.y && my <=(this.y+this.height))
+						return {x:mx - this.x,y:my-this.y,timeStamp:mousedown[1].timeStamp}
+				}catch{return false}
+				return false
+			}
+			if(!this.toggle)
+			{
+				if(mousestate[1]){
+					if(!this.dragged){
+							this.dragged = clicked()
+					}
+				}
+				if(this.dragged){
+					if(this.dragged.timeStamp != mousedown[1].timeStamp)
+							this.dragged = false
+					else
+					{
+							this.x = mouse.gameX - this.dragged.x
+							this.y = mouse.gameY - this.dragged.y
+							this._hook(...this.hooks)
+					}	
+					if(!mousestate[1])this.dragged=false
+				}
+			}
+			else
+			{
+				if(mousebutton[1])console.log('click',mousebutton[1])
+				if(mousebutton[1]&&!this.toggled)
+				{
+					this.dragged=this.dragged?false:clicked()
+					this.toggled = true
+				}
+				if(this.toggled&&!mousestate[1])
+				{
+					this.toggled=false
+				}
+				if(this.dragged)
+				{
+					this.x = mouse.gameX - this.dragged.x
+					this.y = mouse.gameY - this.dragged.y
+					this._hook(...this.hooks)
+				}
+			}
+		}
+	}
+	class Bullet extends GameObject{
+		constructor(index,...args){super(...args);
+
+			setTimeout(_=>{
+
+			delete objects[index]
+			},1000)
+		}
+		firedby=undefined
+		oldx = this.x
+		oldx = this.y
+
+		get color() { 
+			if(!isFinite(this.firedby))return
+			
+			return objects[this.firedby]?.shotcolor ?? (objects[this.firedby].shotcolor = Math.floor(Math.random() * 2) ? 'blue' : 'red')
+
+		}
+
+		Draw(ctx, x, y) {
+
+			let dx = this.x-this.oldx
+			let dy = this.y - this.oldy
+			
+			
+			ctx.strokeStyle = this.color
+			ctx.lineWidth=3
+			ctx.closePath()
+			ctx.beginPath()
+			ctx.moveTo(x - dx, y - dy)
+			ctx.lineTo(x + dx, y + dy)
+
+			ctx.stroke()
+			ctx.closePath()
+
+			this.oldx=this.x
+			this.oldy=this.y
+
+		}
+	}
+	canvas.addEventListener('contextmenu',()=>{})
+
+</script>
+<style >
+	img[onclick]{
+		opacity: 0.5;
+	}
+	img[onclick]:hover{
+		opacity: 0.75;
+	}
+	img[onclick]:active{
+		opacity: 1;
+	}
+</style>
+
+<img role="button" type="button" src="fullscreen.png" width="128" style="cursor:pointer; position: absolute; right:2px; top:2px;" onclick="document.body.requestFullscreen();document.querySelector('img[src=\'exitfullscreen.png\']').hidden=false;this.hidden=true;">
+<img hidden role="button" type="button" src="exitfullscreen.png" width="64" style="cursor:pointer; position: absolute; right:2px; top:2px;" onclick="document.exitFullscreen();document.querySelector('img[src=\'fullscreen.png\']').hidden=false;this.hidden=true;">
+
+<img role="button" type="button" src="bot.png" width="64" style="cursor:pointer; position: absolute; left:4px; bottom:8px;" onclick="conn.invoke('Bot')">
+<img role="button" type="button" src="connect.png" width="64" style="cursor:pointer; position: absolute; right:182px; bottom:8px;" onclick="conn.state=='Connected'?conn.stop():Subscribe()">
+<img role="button" type="button" src="enter.png" width="64" style="cursor:pointer; position: absolute; right:118px; bottom:8px;" onclick="Reenter()">
+
+<div hidden
+style="display:flex; justify-content: space-evenly; position: absolute;right: 0;bottom: 0.3rem;flex-wrap: wrap;"
+>
+	<button role="button" type="button" width="64" style="cursor:pointer; position: absolute; left:1rem; top:1rem;" onclick="document.querySelector('div').remove()	">X</button>
+
+	<img role="button" type="button" src="connect.png" width="64" style="cursor:pointer; position: absolute; right:182px; top:-64px;" onclick="conn.state=='Connected'?conn.stop():Subscribe()">
+	<img role="button" type="button" src="enter.png" width="64" style="cursor:pointer; position: absolute; right:118px; top:-64px;" onclick="Reenter()">
+	<img role="button" type="button" src="load.png" width="52" style="cursor:pointer; position: absolute; right:64px; top:-58px;" onclick="Anim.LoadAnim().then(o=>objects.push(...o))">
+	<img role="button" type="button" src="save.png" width="64" style="cursor:pointer; position: absolute; right:4px; top:-64px;" onclick="WriteAnim()">
+<div 
+style="display:flex; justify-content: space-evenly; flex-grow: 1;width: 100%; "
+>
+sequence:
+<input type="number" style="width:15%;margin-right: 0.3rem;margin-top: 0.1rem;margin-bottom: 0.3rem;" id="isequence">
+row:
+<input type="number" style="width:15%;margin-right: 0.3rem;margin-top: 0.1rem;margin-bottom: 0.3rem;" id="irow">
+count:
+<input type="number" style="width:15%;margin-right: 0.3rem;margin-top: 0.1rem;margin-bottom: 0.3rem;" id="icount">
+<button type="button" style="margin-bottom: 0.2rem;" onclick="eSaveSequence(this,event)">salvar</button>
+</div>
+<div
+style="display:flex; justify-content: space-evenly; flex-grow: 1; width: 100%;"
+>
+x:
+<input type="number" onfocus="this.setSelectionRange(0, this.value.length)" style="width:15%;" id="ix" step="10">
+y:
+<input type="number" style="width:15%;" id="iy" step="10">
+w:
+<input type="number" style="width:15%;" id="iw">
+h:
+<input type="number" style="width:15%;" id="ih">
+</div>
+<div
+style="display:flex; justify-content: space-evenly; flex-grow: 1; margin-top: 0.3rem;"
+>
+ox
+<input type="number" style="width:15%;" id="iox">
+oy
+<input type="number" style="width:15%;" id="ioy">
+ml
+<input type="number" style="width:15%;" id="iml">
+mt
+<input type="number" style="width:15%;" id="imt">
+</div>
+</div>
+<script>
+	ix = document.querySelector('#ix')
+	iy = document.querySelector('#iy')
+	iw = document.querySelector('#iw')
+	ih = document.querySelector('#ih')
+	iox = document.querySelector('#iox')
+	ioy = document.querySelector('#ioy')
+	iml = document.querySelector('#iml')
+	imt = document.querySelector('#imt')
+
+	//debug = true
+	window.playerIndex = undefined
+	calculating = false
+function Subscribe(){
+	calculating = false
+	conn.start()
+			.then(async _ => isFinite(window.playerIndex) ? window.playerIndex : await conn.invoke('Enter'))
+	.then(_=>{
+		window.playerIndex = _
+		conn.stream('Update').subscribe({
+				next: arg => 
+				{
+						arg.filter(p => p.isplayer).iterate((obj, k, i) => {
+							try {
+								if (!objects[obj.index]) {
+									if (!calculating) {
+										calculating = true
+										Anim.LoadAnim('stormtrooper.json')
+											.then(o => {
+												console.log('loadedOnline')
+												objects[obj.index] = new Anim(obj.copy(o))
+												objects[obj.index].__draw = objects[obj.index]._afterDraw
+												objects[obj.index]._afterDraw = function (ctx, x, y, key) {
+													this.__draw(ctx, x, y, key)
+
+													ctx.fillStyle='red'
+													ctx.fillRect(x-((60-this.width)/2), y+this.height+10, 60, 5)
+													if(this.life>0){
+													ctx.fillStyle = 'green'
+													ctx.fillRect(x - ((60 - this.width) / 2), y + this.height + 10, 60 * (this.life / 100), 5)
+													}
+													ctx.fillStyle='black'
+													ctx.fillText(this.kills, x - ((60 - this.width) / 2), y + this.height + 25)
+												}
+												calculating = false
+											})
+											.catch(
+												_ => { console.log(_); calculating = false }
+											)
+									}
+								}
+								else
+									obj.maintainUndefined(objects[obj.index])
+
+							} catch (ex) { console.log(ex) }
+						})
+						arg.filter(p => p.isbullet).iterate((obj, k, i) => {
+							try {
+								if (!objects[obj.index]) {
+										objects[obj.index] = new Bullet(obj.index,obj);
+										obj.maintainUndefined(objects[obj.index])
+								}
+								else
+									obj.maintainUndefined(objects[obj.index])
+
+							} catch (ex) { console.log(ex); }
+						})
+				},
+				error: (err) => {
+					alert(err)
+					if(confirm('Reconnect')){
+						window.Subscribe()
+					}
+					else throw err
+				}
+		})
+	})
+}
+
+Subscribe()
+	objects['camerafollow'] =
+		(ctx) =>
+			{
+			Engine.offset.x = ((ctx.canvas.width / 2) - (objects[window.playerIndex].width / 2)) - objects[window.playerIndex].x
+			Engine.offset.y = ((ctx.canvas.height / 2) - (objects[window.playerIndex].height / 2)) - objects[window.playerIndex].y
+				offset.x = Engine.offset.x
+				offset.y = Engine.offset.y
+			}
+a = async () => {
+		let state = true
+		await fetch('').catch(_ => state = false)
+
+		if (state)
+			return fetch('background.png').then(_ => _.blob())
+				.then(i => createImageBitmap(i))
+					.then(img =>{ 
+						objects[-1] = ctx => {
+						ctx.globalCompositeOperation = 'destination-over';
+						ctx.drawImage(img, Engine.offset.x - (img.width / 2), Engine.offset.y - (img.height / 2))
+						ctx.globalCompositeOperation = 'source-over';
+					}
+						
+					})
+		else
+			return readFile('background.png')
+				.then(i => createImageBitmap(i))
+					.then(img =>{
+
+
+					objects[-1] = ctx => {
+						ctx.globalCompositeOperation = 'destination-over';
+						ctx.drawImage(img, Engine.offset.x - (img.width / 2), Engine.offset.y - (img.height / 2))
+						ctx.globalCompositeOperation = 'source-over';
+					}
+
+
+				})
+
+	}
+	a()
+
+
+	function Reenter(){
+		conn?.invoke('Enter').then(_ => {
+		window.playerIndex = _
+	})
+	}
+</script>
+
