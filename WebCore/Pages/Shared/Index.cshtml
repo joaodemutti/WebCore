@@ -661,8 +661,9 @@ Number.prototype.diff = function(a){return diff(this,a)}
 
 document.onkeydown=function(e){
 	e.preventDefault()
+	if (Engine.keystate[e.keyCode]) return;
     Engine.keymap[e.keyCode]=true
-
+		console.log(e.keyCode)
 	Engine.keystate[e.keyCode] = true
 	window.conn.invoke('input',Engine.keystate)
 
@@ -779,20 +780,37 @@ window.onmousedown=function(e){
 		Engine.mousebutton[e.which] = e
 		Engine.mouseclick[e.which] = e
 
-	console.log('mousedown',e)
+		if(e.which == 3){
+			const c = 67/*KeyC*/
+			Engine.keymap[c] = true
+			Engine.keystate[c] = true
+			window.conn.invoke('input', Engine.keystate)
+		}
+		
+
+	console.log(e.which)
 	mouse = e
 	Engine.mouse= e
 	conn.invoke('Mouse', Engine.mousestate)
 }
 
 window.onmouseup=function(e){
-		Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
+	Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
 	mouse = e
 	Engine.mouse= e
+	
+	if(e.which == 3){
+		const c = 67/*KeyC*/
+		Engine.keystate[c] = false
+		window.conn.invoke('input', Engine.keystate)
+	}
+
 
 		conn.invoke('Mouse', Engine.mousestate)
 }
-	window.oncontextmenu=function(e){e.preventDefault()}
+	window.oncontextmenu=function(e){
+		e.preventDefault()
+	}
 window.onmousemove=function(e){
 	
 		mouse = e
@@ -2398,7 +2416,7 @@ SHEETMUSIC=(a=false)=>{
 
 music(600)
 
-	('A',0.5)('C',.5)('E',.5)('G',.5)('A2',.5)('E',.5)(a?'A2':'A')('A',1)
+	('A',0.5)('C',.5)('E',.5)('G',.5)('A2',.5)('E',.5)(a?'F':'E')('A',1)
 
 }
 
@@ -3161,7 +3179,6 @@ class Anim extends GameObject{
 	}
 	class Bullet extends GameObject{
 		constructor(index,...args){super(...args);
-
 			setTimeout(_=>{
 
 			delete objects[index]
@@ -3198,8 +3215,18 @@ class Anim extends GameObject{
 			this.oldy=this.y
 
 		}
+
+		Update() {
+			if(!this.fired){
+				console.log(this.firedby)
+				this.fired = true
+			}
+
+		}
 	}
-	canvas.addEventListener('contextmenu',()=>{})
+	canvas.addEventListener('contextmenu',()=>{
+	
+	})
 
 </script>
 <style >
