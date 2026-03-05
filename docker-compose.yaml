@@ -1,0 +1,6 @@
+services:
+  webcore:
+    container_name: webcore
+    build: .
+    ports:
+      - "8080:8080"
