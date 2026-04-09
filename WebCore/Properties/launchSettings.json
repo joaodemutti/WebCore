@@ -5,10 +5,10 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://+:8080"
+        "ASPNETCORE_URLS": "http://+:80"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "http://+:8080"
+      "applicationUrl": "http://+:80"
     },
     "https": {
       "commandName": "Project",
@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://+:8080"
+      "applicationUrl": "https://+:80"
     },
     "IIS Express": {
       "commandName": "IISExpress",

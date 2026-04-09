@@ -9,7 +9,7 @@ builder.Services.AddMvc();
 builder.Services.AddControllers().AddRazorRuntimeCompilation();
 builder.Services.AddRazorPages();
 
-builder.WebHost.UseUrls("http://+:8080");
+builder.WebHost.UseUrls("http://+:80");
 
 var app = builder.Build();
 
