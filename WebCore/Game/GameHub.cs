@@ -50,20 +50,26 @@ namespace WebCore.Game
             });
             return id;
         }
-        public async Task<object> Enter()
+        public async Task<object> Enter(string? playerName = null)
         {
             Game.Start();
             int? id = null;
 
             Try.Lock(ref Game._lock, () => {
                 Player p = (Player)Game.Objects.FirstOrDefault(_ => _ is Player p && p.Id(Context.ConnectionId));
-                if (p is null)
+                if (p is null || p.dead)
                 {
-                    Game.Objects.Add(new Player(Context.ConnectionId, Game.Objects.Count));
+                    if (p is not null)
+                    {
+                        Game.Objects[p.Index] = null;
+                    }
+
+                    Game.Objects.Add(new Player(Context.ConnectionId, Game.Objects.Count, playerName));
                     id = Game.Objects.Count - 1;
                 }
                 else
                 {
+                    p.SetName(playerName);
                     id = p.Index;
                 }
 

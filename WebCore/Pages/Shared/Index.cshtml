@@ -65,6 +65,59 @@ padding:0;
 
 </style>
 
+<style>
+	.game-modal-overlay {
+		position: fixed;
+		inset: 0;
+		display: none;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.55);
+		z-index: 9999;
+	}
+
+	.game-modal {
+		min-width: 260px;
+		max-width: 90vw;
+		padding: 1rem;
+		border-radius: 12px;
+		background: #f1f1f1;
+		box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+		text-align: center;
+	}
+
+	.game-modal h3 {
+		margin: 0 0 0.5rem 0;
+	}
+
+	.game-modal p {
+		margin: 0 0 0.85rem 0;
+	}
+
+	.game-modal button {
+		border: none;
+		padding: 0.55rem 0.95rem;
+		border-radius: 8px;
+		cursor: pointer;
+		font-weight: 600;
+		background: #1f7a1f;
+		color: #fff;
+	}
+
+	.game-modal input,
+	.game-modal textarea,
+	.game-modal select,
+	.game-modal button {
+		-webkit-touch-callout: default;
+		-webkit-user-select: text;
+		-khtml-user-select: text;
+		-moz-user-select: text;
+		-ms-user-select: text;
+		user-select: text;
+		outline: auto;
+	}
+</style>
+
 <link rel="manifest" href="./manifest.json" src="./manifest.json" >
 
 
@@ -91,16 +144,38 @@ padding:0;
 <img hidden role="button" type="button" src="exitfullscreen.png" width="64" style="cursor:pointer; position: absolute; right:2px; top:2px;" onclick="document.exitFullscreen();document.querySelector('img[src=\'fullscreen.png\']').hidden=false;this.hidden=true;">
 
 <img role="button" type="button" src="bot.png" width="64" style="cursor:pointer; position: absolute; left:4px; bottom:8px;" onclick="conn.invoke('Bot')">
-<img role="button" type="button" src="connect.png" width="64" style="cursor:pointer; position: absolute; right:182px; bottom:8px;" onclick="conn.state=='Connected'?conn.stop():Subscribe()">
-<img role="button" type="button" src="enter.png" width="64" style="cursor:pointer; position: absolute; right:118px; bottom:8px;" onclick="Reenter()">
+
+<div id="joinModal" class="game-modal-overlay">
+	<div class="game-modal">
+		<h3>Enter Game</h3>
+		<p>Choose your name and press enter.</p>
+		<input type="text" id="joinNameInput" maxlength="24" placeholder="Your name" style="width:100%; margin:0 0 0.65rem 0; padding:0.45rem 0.55rem; border-radius:8px; border:1px solid #999;" />
+		<button type="button" id="joinEnterBtn">Enter</button>
+	</div>
+</div>
+
+<div id="deathModal" class="game-modal-overlay">
+	<div class="game-modal">
+		<h3>You Died</h3>
+		<p>Choose your name and press play to respawn.</p>
+		<input type="text" id="playerNameInput" maxlength="24" placeholder="Your name" style="width:100%; margin:0 0 0.65rem 0; padding:0.45rem 0.55rem; border-radius:8px; border:1px solid #999;" />
+		<button type="button" id="deathPlayBtn">Play</button>
+	</div>
+</div>
+
+<div id="disconnectModal" class="game-modal-overlay">
+	<div class="game-modal">
+		<h3>Disconnected</h3>
+		<p id="disconnectReason">Connection lost.</p>
+		<button type="button" id="reconnectBtn">Reconnect</button>
+	</div>
+</div>
 
 <div hidden
 style="display:flex; justify-content: space-evenly; position: absolute;right: 0;bottom: 0.3rem;flex-wrap: wrap;"
 >
 	<button role="button" type="button" width="64" style="cursor:pointer; position: absolute; left:1rem; top:1rem;" onclick="document.querySelector('div').remove()	">X</button>
 
-	<img role="button" type="button" src="connect.png" width="64" style="cursor:pointer; position: absolute; right:182px; top:-64px;" onclick="conn.state=='Connected'?conn.stop():Subscribe()">
-	<img role="button" type="button" src="enter.png" width="64" style="cursor:pointer; position: absolute; right:118px; top:-64px;" onclick="Reenter()">
 	<img role="button" type="button" src="load.png" width="52" style="cursor:pointer; position: absolute; right:64px; top:-58px;" onclick="Anim.LoadAnim().then(o=>objects.push(...o))">
 	<img role="button" type="button" src="save.png" width="64" style="cursor:pointer; position: absolute; right:4px; top:-64px;" onclick="WriteAnim()">
 <div 
@@ -154,13 +229,190 @@ mt
 	//debug = true
 	window.playerIndex = undefined
 	calculating = false
-function Subscribe(){
+	let updateSubscription = null
+	let shouldPromptRespawnOnReconnect = false
+	let hasJoined = false
+	let worldBounds = null
+	const joinModal = document.querySelector('#joinModal')
+	const deathModal = document.querySelector('#deathModal')
+	const disconnectModal = document.querySelector('#disconnectModal')
+	const disconnectReason = document.querySelector('#disconnectReason')
+	const joinEnterBtn = document.querySelector('#joinEnterBtn')
+	const deathPlayBtn = document.querySelector('#deathPlayBtn')
+	const reconnectBtn = document.querySelector('#reconnectBtn')
+	const joinNameInput = document.querySelector('#joinNameInput')
+	const playerNameInput = document.querySelector('#playerNameInput')
+	const PLAYER_NAME_KEY = 'webcore-player-name'
+
+	const showModal = (modal) => {
+		if (!modal) return
+		modal.style.display = 'flex'
+	}
+
+	const hideModal = (modal) => {
+		if (!modal) return
+		modal.style.display = 'none'
+	}
+
+	const showJoinModal = () => {
+		showModal(joinModal)
+		setTimeout(() => {
+			try {
+				joinNameInput?.focus()
+				joinNameInput?.select()
+			} catch (_) { }
+		}, 0)
+	}
+	const hideJoinModal = () => hideModal(joinModal)
+
+	const showDeathModal = () => {
+		showModal(deathModal)
+		setTimeout(() => {
+			try {
+				playerNameInput?.focus()
+				playerNameInput?.select()
+			} catch (_) { }
+		}, 0)
+	}
+	const hideDeathModal = () => hideModal(deathModal)
+
+	const sanitizePlayerName = (name) => {
+		const normalized = String(name || '').trim()
+		return normalized.length > 24 ? normalized.slice(0, 24) : normalized
+	}
+
+	const persistPlayerName = (name) => {
+		const sanitized = sanitizePlayerName(name)
+		if (joinNameInput) joinNameInput.value = sanitized
+		if (playerNameInput) playerNameInput.value = sanitized
+		try {
+			if (sanitized) {
+				localStorage.setItem(PLAYER_NAME_KEY, sanitized)
+			} else {
+				localStorage.removeItem(PLAYER_NAME_KEY)
+			}
+		} catch (_) { }
+		return sanitized
+	}
+
+	const getChosenPlayerName = () => {
+		return persistPlayerName(playerNameInput?.value || '')
+	}
+
+	try {
+		const cachedName = localStorage.getItem(PLAYER_NAME_KEY) || ''
+		if (joinNameInput) {
+			joinNameInput.value = sanitizePlayerName(cachedName)
+		}
+		if (playerNameInput) {
+			playerNameInput.value = sanitizePlayerName(cachedName)
+		}
+	} catch (_) { }
+
+	const showDisconnectModal = (reason) => {
+		if (disconnectReason) {
+			disconnectReason.textContent = reason || 'Connection lost.'
+		}
+		showModal(disconnectModal)
+	}
+
+	const hideDisconnectModal = () => hideModal(disconnectModal)
+	const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
+
+	const getPlayerNameTag = (playerLike) => {
+		if (!playerLike) return 'Player'
+		if (playerLike.nametag) return String(playerLike.nametag)
+		if (playerLike.name) return String(playerLike.name)
+		return `Player ${playerLike.index}`
+	}
+
+	joinEnterBtn?.addEventListener('click', () => {
+		const chosenName = persistPlayerName(joinNameInput?.value || '')
+		hideJoinModal()
+		Subscribe(chosenName)
+	})
+
+	joinNameInput?.addEventListener('keydown', (event) => {
+		event.stopPropagation()
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			joinEnterBtn?.click()
+		}
+	})
+
+	joinNameInput?.addEventListener('keyup', (event) => {
+		event.stopPropagation()
+	})
+
+	deathPlayBtn?.addEventListener('click', () => {
+		hideDeathModal()
+		Reenter(getChosenPlayerName())
+	})
+
+	playerNameInput?.addEventListener('keydown', (event) => {
+		event.stopPropagation()
+		if (event.key === 'Enter') {
+			event.preventDefault()
+			deathPlayBtn?.click()
+		}
+	})
+
+	playerNameInput?.addEventListener('keyup', (event) => {
+		event.stopPropagation()
+	})
+
+	joinNameInput?.addEventListener('change', () => {
+		persistPlayerName(joinNameInput?.value || '')
+	})
+
+	playerNameInput?.addEventListener('change', () => {
+		persistPlayerName(playerNameInput?.value || '')
+	})
+
+	reconnectBtn?.addEventListener('click', () => {
+		hideDisconnectModal()
+		shouldPromptRespawnOnReconnect = true
+		Subscribe()
+	})
+
+	conn.onreconnecting((err) => {
+		shouldPromptRespawnOnReconnect = true
+		const reason = err?.message
+			? `Connection lost. Reconnecting... (${err.message})`
+			: 'Connection lost. Reconnecting...'
+		showDisconnectModal(reason)
+	})
+
+	conn.onreconnected(() => {
+		hideDisconnectModal()
+		Subscribe()
+	})
+
+	conn.onclose((err) => {
+		const reason = err?.message ? `Disconnected: ${err.message}` : 'Disconnected from server.'
+		showDisconnectModal(reason)
+	})
+
+function Subscribe(playerName){
 	calculating = false
-	conn.start()
-			.then(async _ => isFinite(window.playerIndex) ? window.playerIndex : await conn.invoke('Enter'))
+	const startPromise = conn.state === 'Connected'
+		? Promise.resolve()
+		: (conn.state === 'Disconnected' ? conn.start() : Promise.reject(new Error('Connection is not ready yet.')))
+	startPromise
+			.then(async _ => isFinite(window.playerIndex) ? window.playerIndex : await conn.invoke('Enter', sanitizePlayerName(playerName ?? getChosenPlayerName())))
 	.then(_=>{
+		hideDisconnectModal()
+		hideJoinModal()
+		hasJoined = true
 		window.playerIndex = _
-		conn.stream('Update').subscribe({
+		if (shouldPromptRespawnOnReconnect) {
+			showDeathModal()
+			shouldPromptRespawnOnReconnect = false
+		}
+		if (updateSubscription) {
+			updateSubscription.dispose()
+		}
+		updateSubscription = conn.stream('Update').subscribe({
 				next: arg => 
 				{
 						arg.filter(p => p.isplayer).iterate((obj, k, i) => {
@@ -175,6 +427,10 @@ function Subscribe(){
 												objects[obj.index].__draw = objects[obj.index]._afterDraw
 												objects[obj.index]._afterDraw = function (ctx, x, y, key) {
 													this.__draw(ctx, x, y, key)
+													ctx.fillStyle = 'black'
+													ctx.textAlign = 'center'
+													ctx.fillText(getPlayerNameTag(this), x + (this.width / 2), y - 6)
+													ctx.textAlign = 'start'
 
 													ctx.fillStyle='red'
 													ctx.fillRect(x-((60-this.width)/2), y+this.height+10, 60, 5)
@@ -195,6 +451,14 @@ function Subscribe(){
 								else
 									obj.maintainUndefined(objects[obj.index])
 
+								if (obj.index === window.playerIndex) {
+									if (obj.dead || obj.life <= 0) {
+										showDeathModal()
+									} else {
+										hideDeathModal()
+									}
+								}
+
 							} catch (ex) { console.log(ex) }
 						})
 						arg.filter(p => p.isbullet).iterate((obj, k, i) => {
@@ -210,22 +474,37 @@ function Subscribe(){
 						})
 				},
 				error: (err) => {
-					alert(err)
-					if(confirm('Reconnect')){
-						window.Subscribe()
-					}
-					else throw err
+					console.log(err)
+					showDisconnectModal('Disconnected while receiving updates.')
 				}
 		})
 	})
+	.catch(err => {
+		console.log(err)
+		showDisconnectModal('Unable to connect. Try reconnecting.')
+	})
 }
 
-Subscribe()
+showJoinModal()
 	objects['camerafollow'] =
 		(ctx) =>
 			{
-			Engine.offset.x = ((ctx.canvas.width / 2) - (objects[window.playerIndex].width / 2)) - objects[window.playerIndex].x
-			Engine.offset.y = ((ctx.canvas.height / 2) - (objects[window.playerIndex].height / 2)) - objects[window.playerIndex].y
+			const player = objects[window.playerIndex]
+			if (!player) return
+			const desiredX = ((ctx.canvas.width / 2) - (objects[window.playerIndex].width / 2)) - objects[window.playerIndex].x
+			const desiredY = ((ctx.canvas.height / 2) - (objects[window.playerIndex].height / 2)) - objects[window.playerIndex].y
+
+			if (worldBounds) {
+				const minX = ctx.canvas.width - worldBounds.halfWidth
+				const maxX = worldBounds.halfWidth
+				const minY = ctx.canvas.height - worldBounds.halfHeight
+				const maxY = worldBounds.halfHeight
+				Engine.offset.x = clamp(desiredX, minX, maxX)
+				Engine.offset.y = clamp(desiredY, minY, maxY)
+			} else {
+				Engine.offset.x = desiredX
+				Engine.offset.y = desiredY
+			}
 				offset.x = Engine.offset.x
 				offset.y = Engine.offset.y
 			}
@@ -237,6 +516,7 @@ a = async () => {
 			return fetch('background.png').then(_ => _.blob())
 				.then(i => createImageBitmap(i))
 					.then(img =>{ 
+						worldBounds = { halfWidth: img.width / 2, halfHeight: img.height / 2 }
 						objects[-1] = ctx => {
 						ctx.globalCompositeOperation = 'destination-over';
 						ctx.drawImage(img, Engine.offset.x - (img.width / 2), Engine.offset.y - (img.height / 2))
@@ -248,6 +528,7 @@ a = async () => {
 			return readFile('background.png')
 				.then(i => createImageBitmap(i))
 					.then(img =>{
+					worldBounds = { halfWidth: img.width / 2, halfHeight: img.height / 2 }
 
 
 					objects[-1] = ctx => {
@@ -263,9 +544,10 @@ a = async () => {
 	a()
 
 
-	function Reenter(){
-		conn?.invoke('Enter').then(_ => {
+	function Reenter(playerName){
+		conn?.invoke('Enter', sanitizePlayerName(playerName)).then(_ => {
 		window.playerIndex = _
+		hideDeathModal()
 	})
 	}
 </script>

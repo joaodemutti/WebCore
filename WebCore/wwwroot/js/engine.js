@@ -580,7 +580,17 @@ Number.prototype.__defineGetter__('sign',function(){return sign(this)})
 Number.prototype.diff = function(a){return diff(this,a)}
 
 
+const isTypingTarget = (el) =>
+	el &&
+	(
+		el.tagName === 'INPUT' ||
+		el.tagName === 'TEXTAREA' ||
+		el.tagName === 'SELECT' ||
+		el.isContentEditable === true
+	)
+
 document.onkeydown=function(e){
+	if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) return;
 	e.preventDefault()
 	if (Engine.keystate[e.keyCode]) return;
     Engine.keymap[e.keyCode]=true
@@ -593,6 +603,7 @@ document.onkeydown=function(e){
 
 
 document.onkeyup=function(e){
+		if (isTypingTarget(e.target) || isTypingTarget(document.activeElement)) return;
 
 		Engine.keystate[e.keyCode] = false
 		window.conn.invoke('input', Engine.keystate)
@@ -696,6 +707,7 @@ document.onkeyup=function(e){
 
 
 window.onmousedown=function(e){
+		if (isTypingTarget(e.target)) return;
 		Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
 		Engine.mousedown[e.which] = e
 		Engine.mousebutton[e.which] = e
@@ -716,6 +728,7 @@ window.onmousedown=function(e){
 }
 
 window.onmouseup=function(e){
+	if (isTypingTarget(e.target)) return;
 	Engine.mousestate[e.which] = { which: e.which, x: e.gameX, y: e.gameY, type: e.type, timestamp: e.timeStamp }
 	mouse = e
 	Engine.mouse= e
@@ -730,9 +743,11 @@ window.onmouseup=function(e){
 		conn.invoke('Mouse', Engine.mousestate)
 }
 	window.oncontextmenu=function(e){
+		if (isTypingTarget(e.target)) return;
 		e.preventDefault()
 	}
 window.onmousemove=function(e){
+	if (isTypingTarget(e.target)) return;
 	
 		mouse = e
 	Engine.mouse= e

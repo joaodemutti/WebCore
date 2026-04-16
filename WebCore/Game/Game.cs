@@ -80,7 +80,7 @@ namespace WebCore.Game
 
 
             last = DateTime.Now;
-            await Task.Delay(10-milis);
+            await Task.Delay(Math.Max(0, 10 - milis));
 
             Update();
         }
@@ -238,10 +238,12 @@ namespace WebCore.Game
     {
         public Mouse[] MouseState = new Mouse[6];
         private string _id;
-        public Player(string connectionId, int index)
+        private string? _name;
+        public Player(string connectionId, int index, string? playerName = null)
         {
             _id = connectionId;
             _index = index;
+            SetName(playerName);
             RandomCoordenates();
         }
 
@@ -252,6 +254,7 @@ namespace WebCore.Game
         }
 
         public bool isplayer => true;
+        public string nametag => _id == "_" ? "Bot" : (!string.IsNullOrWhiteSpace(_name) ? _name : $"Player {Index}");
         public double x { get; set; }
         public double y { get; set; }
         public double centerx => x + (width / 2);
@@ -296,6 +299,18 @@ namespace WebCore.Game
 
 
         public bool Id(string connectionId) { return this._id == connectionId; }
+
+        public void SetName(string? playerName)
+        {
+            var normalized = playerName?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                _name = null;
+                return;
+            }
+
+            _name = normalized.Length > 24 ? normalized.Substring(0, 24) : normalized;
+        }
 
         public List<bool?> Input = new List<bool?>(new bool?[254]);
         public async void Shoot(double x, double y) 
