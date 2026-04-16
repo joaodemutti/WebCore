@@ -9,7 +9,9 @@ builder.Services.AddMvc();
 builder.Services.AddControllers().AddRazorRuntimeCompilation();
 builder.Services.AddRazorPages();
 
-builder.WebHost.UseUrls("http://+:80");
+var portValue = Environment.GetEnvironmentVariable("PORT");
+var port = int.TryParse(portValue, out var parsedPort) ? parsedPort : 80;
+builder.WebHost.UseUrls($"http://+:{port}");
 
 var app = builder.Build();
 
