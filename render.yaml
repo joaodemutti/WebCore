@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: webcore
+    name: webcore-game
     runtime: docker
     plan: free
     dockerfilePath: ./Dockerfile
